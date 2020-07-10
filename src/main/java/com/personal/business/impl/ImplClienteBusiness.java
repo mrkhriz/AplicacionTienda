@@ -1,16 +1,22 @@
 package com.personal.business.impl;
 
 import com.personal.business.intefaz.ClienteBusiness;
+import com.personal.dto.DtoChangePass;
 import com.personal.dto.DtoCliente;
+import com.personal.dto.DtoLogin;
+import com.personal.dto.DtoRta;
 import com.personal.persistence.model.Client;
 import com.personal.persistence.repo.ClientRepository;
 import com.personal.util.impl.ImplUtilities;
 import com.personal.util.interfaz.Utilities;
+import com.personal.web.exception.ClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+import javax.xml.ws.http.HTTPException;
 import java.util.List;
 
 @Component
@@ -19,65 +25,64 @@ public class ImplClienteBusiness implements ClienteBusiness {
     private static Logger LOG = LoggerFactory.getLogger(ImplClienteBusiness.class);
 
     @Autowired
-    ClientRepository clientRepository;
+    private ClientRepository clientRepository;
 
     Utilities utilities = new ImplUtilities();
 
-    /*
+
     public DtoCliente consultarUsuario (String email){
 
-        if (funciones.validarEmail(email)==0){
-            ImplPostgreSQLJDBC conexion  = new ImplPostgreSQLJDBC();
-            DtoCliente dtoClienteCons = conexion.consultarCliente(email);
-            return dtoClienteCons;
+        DtoCliente dtoCliente = new DtoCliente();
+        List<Client> listaCliente = clientRepository.findByEmail(email);
+
+        if (listaCliente.isEmpty()){
+
+            throw new ClientException(HttpStatus.NOT_FOUND,"Cliente no encontrado.");
         }
-        return null;
+
+        for (Client client : listaCliente){
+
+            dtoCliente.setId(client.getId());
+            dtoCliente.setName(client.getName());
+            dtoCliente.setEmail(client.getEmail());
+            dtoCliente.setPassword(client.getPassword());
+
+        }
+
+        return dtoCliente;
     }
 
-    public int crearUsuario (DtoCliente dtoCliente){
+    public DtoRta loguearUsuario (DtoLogin dtoLogin){
 
-       if (this.funciones.validarDatos(dtoCliente) == 0){
+        DtoRta dtoRta = new DtoRta();
 
-           ImplPostgreSQLJDBC conexion  = new ImplPostgreSQLJDBC();
-           DtoCliente dtoClienteCons = conexion.consultarCliente(dtoCliente.getEmail());
+        if (this.utilities.validarEmail(dtoLogin.getEmail()).getCodigo() == 0){
 
-           if (dtoClienteCons == null || dtoClienteCons.getId() > 0 ){
+            DtoCliente dtoCliente = this.consultarUsuario(dtoLogin.getEmail());
 
-               return 3;
-           }
+            if ( this.utilities.cifrarMD5(dtoLogin.getPassword()).equals(dtoCliente.getPassword())
+                    && dtoLogin.getEmail().equals(dtoCliente.getEmail())){
 
-           dtoCliente.setPassword(funciones.cifrarMD5(dtoCliente.getPassword()));
-           return conexion.insertarCliente(dtoCliente);
-       }
-       return 2;
-   }
+                return null;
 
-    public boolean loguearUsuario (DtoLogin dtoLogin){
-
-        if (this.funciones.validarEmail(dtoLogin.getEmail()) == 0){
-
-            PostgreSQLJDBC postgreSQLJDBC = new ImplPostgreSQLJDBC();
-            DtoCliente dtoClienteLog = postgreSQLJDBC.consultarCliente(dtoLogin.getEmail());
-
-            if ( dtoClienteLog.getPassword().equals(this.funciones.cifrarMD5(dtoLogin.getPassword()))
-                    && dtoClienteLog.getEmail().equals(dtoLogin.getEmail())){
-                System.out.println("Login Exitoso.");
-                return true;
             }
         }
-        System.out.println("Login No Exitoso.");
-        return false;
-    }*/
+        throw new RuntimeException("Login no exitoso") ;
+        //throw new ClientException(new HTTPException(HttpStatus.UNAUTHORIZED.value()),"Login No Exitoso.");
+
+        //dtoRta.setCodigo(1);
+        //dtoRta.setDescripcion("Login No Exitoso.");
+        //return dtoRta;
+    }
 
 
     public DtoCliente crearUsuario (DtoCliente dtoCliente){
 
         LOG.info("Crear Usuario");
 
-        if (this.utilities.validarDatos(dtoCliente) == 0){
+        if (this.utilities.validarDatos(dtoCliente).getCodigo() == 0){
 
             Client cliente = new Client();
-            System.out.println("dtoC: "+dtoCliente.getEmail());
             List<Client> listaCliente = clientRepository.findByEmail(dtoCliente.getEmail());
 
             if (!listaCliente.isEmpty()){
@@ -96,5 +101,54 @@ public class ImplClienteBusiness implements ClienteBusiness {
             }
         }
         return dtoCliente;
+    }
+
+    public DtoRta cambiarPassword(DtoChangePass dtoChangePass){
+
+        DtoRta dtoRta = new DtoRta();
+
+        if (this.utilities.validarEmail(dtoChangePass.getEmail()).getCodigo() == 0){
+
+            DtoCliente dtoCliente = this.consultarUsuario(dtoChangePass.getEmail());
+            String passwordCifrado = this.utilities.cifrarMD5(dtoChangePass.getPassword());
+            String newPasswordCifrado= this.utilities.cifrarMD5(dtoChangePass.getNewPassword());
+
+            if ( dtoChangePass.getEmail().equals(dtoCliente.getEmail())
+                && passwordCifrado.equals(dtoCliente.getPassword())){
+
+                if(newPasswordCifrado.equals(dtoCliente.getPassword())){
+
+                    dtoRta.setCodigo(3);
+                    dtoRta.setDescripcion("El nuevo password no puede ser igual al anterior.");
+
+                    return dtoRta;
+
+                }
+
+                Client cliente = new Client();
+                cliente.setId(dtoCliente.getId());
+                cliente.setName(dtoCliente.getName());
+                cliente.setEmail(dtoCliente.getEmail());
+                cliente.setPassword(newPasswordCifrado);
+                clientRepository.save(cliente);
+                dtoRta.setCodigo(0);
+                dtoRta.setDescripcion("Cambio password exitoso.");
+
+                return dtoRta;
+
+            } else {
+
+                dtoRta.setCodigo(4);
+                dtoRta.setDescripcion("Usuario o clave inválidos.");
+
+                return dtoRta;
+
+            }
+        }
+
+        dtoRta.setCodigo(5);
+        dtoRta.setDescripcion("Usuario o clave inválidos.");
+
+        return dtoRta;
     }
 }

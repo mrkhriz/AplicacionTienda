@@ -1,5 +1,6 @@
 package com.personal.web;
 
+import com.personal.dto.DtoCliente;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -16,15 +17,21 @@ public class BaseController {
     @Autowired
     ClientController clientController;
 
-    /*
+
     @GetMapping("/home")
-    public String inicioAplicacion (Model model){
+    public String inicioAplicacion (Model model) {
 
-        List client = clientController.findByEmail("mail@mail.com");
+        DtoCliente dtoCliente = clientController.getClient("mail@mail.com").getBody();
         model.addAttribute("nombreAplicacion", nombreAplicacion);
-        model.addAttribute("clientes", client);
+        model.addAttribute("clientes", dtoCliente);
         return "home";
+    }
 
-    }*/
+    @GetMapping("/createClient")
+    public String createClient (Model model){
 
+        model.addAttribute("client", new DtoCliente());
+        return "create";
+
+    }
 }

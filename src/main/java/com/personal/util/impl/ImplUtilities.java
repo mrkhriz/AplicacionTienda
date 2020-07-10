@@ -1,6 +1,7 @@
 package com.personal.util.impl;
 
 import com.personal.dto.DtoCliente;
+import com.personal.dto.DtoRta;
 import com.personal.util.interfaz.Utilities;
 
 import java.math.BigInteger;
@@ -9,17 +10,24 @@ import java.security.NoSuchAlgorithmException;
 
 public class ImplUtilities implements Utilities {
 
-    public int validarDatos(DtoCliente dtoCliente) {
+    public DtoRta validarDatos(DtoCliente dtoCliente) {
+
+        DtoRta dtoRta = new DtoRta();
 
 
-        if (validarEmail(dtoCliente.getEmail()) == 1) {
+        if (validarEmail(dtoCliente.getEmail()).getCodigo() == 0) {
 
-            return 1;
+            dtoRta.setCodigo(6);
+            dtoRta.setDescripcion("Email inválido.");
+
+            return dtoRta;
 
         } else if (dtoCliente.getPassword().length() > 6) {
 
-            System.out.println("Password inconsistente.");
-            return 1;
+            dtoRta.setCodigo(7);
+            dtoRta.setDescripcion("Password inválido");
+
+            return dtoRta;
 
         } else {
 
@@ -27,10 +35,17 @@ public class ImplUtilities implements Utilities {
                 char caracter = dtoCliente.getName().toUpperCase().charAt(i);
                 int valorASCII = (int) caracter;
                 if (valorASCII < 65 || valorASCII > 90)
-                    return 1;
+
+                    dtoRta.setCodigo(0);
+                    dtoRta.setDescripcion("Nombre inválido.");
+
+                return dtoRta;
             }
         }
-        return 0;
+        dtoRta.setCodigo(0);
+        dtoRta.setDescripcion("Validación datos exitosa.");
+
+        return dtoRta;
     }
 
     public String cifrarMD5(String dato) {
@@ -50,17 +65,24 @@ public class ImplUtilities implements Utilities {
         }
     }
 
-    public int validarEmail (String email){
+    public DtoRta validarEmail (String email){
+
+        DtoRta dtoRta = new DtoRta();
 
         String regexMail = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
 
         if (!email.matches(regexMail)) {
 
-            System.out.println("Email inconsistente.");
-            return 1;
+            dtoRta.setCodigo(1);
+            dtoRta.setDescripcion("Email inválido.");
+
+            return dtoRta;
 
         }
-        return 0;
+        dtoRta.setCodigo(0);
+        dtoRta.setDescripcion("Email válido.");
+
+        return dtoRta;
     }
 
 }

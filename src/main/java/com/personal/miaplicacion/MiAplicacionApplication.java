@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 @SpringBootApplication(scanBasePackages = "com.personal")
 @EnableAsync
 @EnableJpaRepositories("com.personal.persistence.repo")
-@ComponentScan(basePackages = {"co.com.personal", "co.com.client.business.impl"})
 @EntityScan("com.personal.persistence.model")
 
 public class MiAplicacionApplication {

@@ -1,43 +1,34 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
 <body>
+<div class="container">
 <p><span th:text="${nombreAplicacion}"></span></p>
 <h1>Tienda de reparación</h1>
 <h2>Consulta cliente</h2>
 
-<table>
+<table class="table table-dark">
     <thead>
     <tr>
         <th>Cliente encontrado.</th>
     </tr>
     </thead>
     <tbody>
-    <tr th:each="client: ${clientes}">
+        <tr th:each="client: ${clientes}">
         <td th:text="${client.name}"></td>
         <td th:text="${client.email}"></td>
     </tr>
     </tbody>
 </table>
 
-<form action="#" th:action="@{/saveStudent}" th:object="${student}" method="post">
-    <table border="1">
-        <tr>
-            <td><label th:text="#{msg.id}" /></td>
-            <td><input type="number" th:field="*{id}" /></td>
-        </tr>
-        <tr>
-            <td><label th:text="#{msg.name}" /></td>
-            <td><input type="text" th:field="*{name}" /></td>
-        </tr>
-        <tr>
-            <td><input type="submit" value="Submit" /></td>
-        </tr>
-    </table>
-</form>
+    <form action="#" th:action="@{/createClient}" method="get">
+        <input type="submit" value="Submit" />
+    </form>
 
+</div>
 </body>
 </html>
